@@ -1,0 +1,61 @@
+services:
+  kady:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: k-dense-byok:local
+    container_name: kady-byok
+    restart: unless-stopped
+    ports:
+      # UI — the app's Next.js frontend (default 3000)
+      - "${KADY_UI_PORT:-3000}:3000"
+      # API — backend Fastify server (expose only if needed, e.g. for health checks)
+      - "${KADY_API_PORT:-8000}:8000"
+    environment:
+      # --- model access ---
+      OPENROUTER_API_KEY: "${OPENROUTER_API_KEY:-}"
+      NVIDIA_API_KEY: "${NVIDIA_API_KEY:-}"
+      MODAL_TOKEN_ID: "${MODAL_TOKEN_ID:-}"
+      MODAL_TOKEN_SECRET: "${MODAL_TOKEN_SECRET:-}"
+      OLLAMA_BASE_URL: "${OLLAMA_BASE_URL:-http://host.docker.internal:11434}"
+
+      # --- model defaults ---
+      DEFAULT_MODEL_ID: "${DEFAULT_MODEL_ID:-anthropic/claude-opus-5}"
+      DEFAULT_MODEL_PROVIDER: "${DEFAULT_MODEL_PROVIDER:-openrouter}"
+
+      # --- backend knobs ---
+      KADY_HOST: "0.0.0.0"
+      KADY_PORT: "8000"
+      KADY_PROJECTS_ROOT: "/app/projects"
+
+      # --- optional web-access keys ---
+      EXA_API_KEY: "${EXA_API_KEY:-}"
+      PERPLEXITY_API_KEY: "${PERPLEXITY_API_KEY:-}"
+      GEMINI_API_KEY: "${GEMINI_API_KEY:-}"
+
+      # --- proxy (Node does not pick these up automatically) ---
+      HTTPS_PROXY: "${HTTPS_PROXY:-}"
+      HTTP_PROXY: "${HTTP_PROXY:-}"
+      NO_PROXY: "${NO_PROXY:-localhost,127.0.0.1}"
+
+    extra_hosts:
+      # Allow the app to reach an Ollama / other service running on the host.
+      # Docker Desktop on Linux ≥ 20.10 resolves this to the host gateway IP.
+      - "host.docker.internal:host-gateway"
+
+    volumes:
+      # Persist projects (conversations, files, notebooks)
+      - kady-projects:/app/projects
+      # Persist Pi-agent credentials (OAuth tokens), settings, and skills cache
+      - kady-home:/root/.kady
+
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 180s
+
+volumes:
+  kady-projects:
+  kady-home:

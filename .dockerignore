@@ -1,0 +1,13 @@
+.git/
+.gitignore
+.gitattributes
+*.md
+.env
+.env.*
+!.env.example
+node_modules/
+.next/
+projects/
+data/
+__pycache__/
+*.pyc

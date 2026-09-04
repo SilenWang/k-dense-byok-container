@@ -1,0 +1,34 @@
+# GPU override for K-Dense BYOK container
+#
+# Prerequisites:
+#   - NVIDIA Container Toolkit ≥ 1.15 (https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/)
+#   - Docker Engine ≥ 25 (or Docker Desktop 4.32+ for the `devices` syntax)
+#
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.gpu.yml up -d
+#
+# Optional Ollama sidecar (GPU-powered local models):
+#   docker compose -f docker-compose.yml -f docker-compose.gpu.yml --profile ollama up -d
+#   Then set OLLAMA_BASE_URL=http://ollama:11434 in your .env file.
+
+services:
+  kady:
+    # CDI-based GPU passthrough: injects /dev/nvidia*, nvidia-smi, and CUDA libs
+    devices:
+      - nvidia.com/gpu=all
+
+  # --- optional GPU-powered Ollama sidecar ---
+  ollama:
+    profiles: ["ollama"]
+    image: ollama/ollama:latest
+    container_name: kady-ollama
+    restart: unless-stopped
+    devices:
+      - nvidia.com/gpu=all
+    volumes:
+      - ollama-data:/root/.ollama
+    ports:
+      - "11434:11434"
+
+volumes:
+  ollama-data:
