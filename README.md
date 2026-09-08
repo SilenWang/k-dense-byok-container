@@ -113,14 +113,31 @@ pixi run up-gpu-ollama
 
 | 变量 | 默认值 | 说明 |
 |---|---|---|
-| `OPENROUTER_API_KEY` | — | OpenRouter API 密钥 |
-| `NVIDIA_API_KEY` | — | NVIDIA NIM API 密钥 |
+| `OPENROUTER_API_KEY` | — | OpenRouter API 密钥（最通用） |
+| `OPENROUTER_BASE_URL` | — | 可指向任意 OpenAI 兼容网关（如 Requesty） |
+| `NVIDIA_API_KEY` | — | NVIDIA NIM API 密钥（build.nvidia.com） |
+| `OPENAI_COMPATIBLE_BASE_URL` | — | 本地 OpenAI 兼容服务器（LM Studio / vLLM） |
+| `MODAL_TOKEN_ID` / `MODAL_TOKEN_SECRET` | — | Modal 云端 GPU 计算凭证 |
 | `OLLAMA_BASE_URL` | `http://host.docker.internal:11434` | Ollama 端点 |
 | `DEFAULT_MODEL_ID` | `anthropic/claude-opus-5` | 默认模型 ID |
 | `DEFAULT_MODEL_PROVIDER` | `openrouter` | 默认模型提供商 |
 | `KADY_UI_PORT` | `3000` | 前端端口映射 |
 | `KADY_API_PORT` | `8000` | 后端端口映射 |
 | `HTTP_PROXY` / `HTTPS_PROXY` | — | 企业代理 |
+
+### 模型来源说明
+
+K-Dense BYOK 的命名"BYOK"（Bring Your Own Keys）就说明了它支持多种模型来源：
+
+| 方式 | 配置方法 | 费用 |
+|---|---|---|
+| **OpenRouter** | `.env` 填 `OPENROUTER_API_KEY` | 按量付费 |
+| **NVIDIA NIM** | `.env` 填 `NVIDIA_API_KEY` | NVIDIA API 配额 |
+| **ChatGPT / Claude / Copilot / xAI 订阅** | 启动应用后，Settings → Model providers 网页授权连接（OAuth），无需 API key | 使用已有订阅 |
+| **本地 Ollama** | 默认 `host.docker.internal:11434` 或 GPU 侧边容器，免费 | 免费 |
+| **本地 OpenAI 兼容服务** | `.env` 填 `OPENAI_COMPATIBLE_BASE_URL`（如 LM Studio / vLLM） | 免费 |
+
+订阅类的 OAuth 凭据自动持久化在 `kady-home` 卷中，重启容器不丢失。
 
 完整变量列表见上游的 [.env.example](https://github.com/K-Dense-AI/k-dense-byok/blob/main/.env.example)。
 

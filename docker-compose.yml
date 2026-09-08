@@ -14,7 +14,9 @@ services:
     environment:
       # --- model access ---
       OPENROUTER_API_KEY: "${OPENROUTER_API_KEY:-}"
+      OPENROUTER_BASE_URL: "${OPENROUTER_BASE_URL:-}"
       NVIDIA_API_KEY: "${NVIDIA_API_KEY:-}"
+      OPENAI_COMPATIBLE_BASE_URL: "${OPENAI_COMPATIBLE_BASE_URL:-}"
       MODAL_TOKEN_ID: "${MODAL_TOKEN_ID:-}"
       MODAL_TOKEN_SECRET: "${MODAL_TOKEN_SECRET:-}"
       OLLAMA_BASE_URL: "${OLLAMA_BASE_URL:-http://host.docker.internal:11434}"
