@@ -1,0 +1,67 @@
+diff --git a/server/src/cors.ts b/server/src/cors.ts
+index ae87274..4e71275 100644
+--- a/server/src/cors.ts
++++ b/server/src/cors.ts
+@@ -15,6 +15,24 @@ export function isCorsOriginAllowed(origin: string | undefined): boolean {
+   return CORS_ALLOW.some((re) => re.test(origin));
+ }
+ 
++/**
++ * True when `origin` is served from the same host as `host` (the request's
++ * Host header), regardless of port. This lets a container accessed at
++ * `http://<host>:<ui>` call the API at `http://<host>:<api>` for hosts that
++ * fall outside the private ranges above (e.g. a domain name).
++ */
++export function isSameHostOrigin(
++  origin: string | undefined,
++  host: string | undefined,
++): boolean {
++  if (!origin || !host) return false;
++  try {
++    return new URL(origin).hostname === host.split(":")[0];
++  } catch {
++    return false;
++  }
++}
++
+ export function corsResponseHeaders(origin: string | undefined): Record<string, string> {
+   if (!origin || !isCorsOriginAllowed(origin)) return {};
+   return {
+diff --git a/server/src/index.ts b/server/src/index.ts
+index 74a3fe1..0164d3f 100644
+--- a/server/src/index.ts
++++ b/server/src/index.ts
+@@ -13,7 +13,7 @@ import fastifyCors from "@fastify/cors";
+ import multipart from "@fastify/multipart";
+ import Fastify, { type FastifyRequest } from "fastify";
+ import { DEFAULT_PROJECT_ID, HOST, PORT, modalConfigured } from "./config.ts";
+-import { isCorsOriginAllowed } from "./cors.ts";
++import { isCorsOriginAllowed, isSameHostOrigin } from "./cors.ts";
+ import { ensureProjectExists, getProject } from "./projects.ts";
+ import { withActiveProject } from "./scope.ts";
+ import { registerProjectRoutes } from "./api/projects.ts";
+@@ -82,11 +82,20 @@ export async function buildApp() {
+   });
+ 
+   await app.register(fastifyCors, {
+-    origin: (origin, cb) => {
+-      cb(null, isCorsOriginAllowed(origin));
++    // Allow the built-in local/LAN origins, and additionally any origin whose
++    // host matches the host this request arrived on. The latter is what makes
++    // a container reachable at http://<host>:<ui> able to call the API at
++    // http://<host>:<api> when <host> is a domain or a non-private address.
++    delegator: (req, cb) => {
++      const origin = req.headers.origin;
++      cb(null, {
++        origin:
++          isCorsOriginAllowed(origin) ||
++          isSameHostOrigin(origin, req.headers.host),
++        credentials: true,
++        exposedHeaders: ["ETag", "X-Project-Fallback", "X-Content-SHA256"],
++      });
+     },
+-    credentials: true,
+-    exposedHeaders: ["ETag", "X-Project-Fallback", "X-Content-SHA256"],
+   });
+ 
+   await app.register(multipart, { limits: { fileSize: 1024 * 1024 * 1024 } });

@@ -13,6 +13,9 @@ services:
       - "${KADY_API_PORT:-8000}:8000"
     environment:
       # --- model access ---
+      # DeepSeek official API (default model source)
+      DEEPSEEK_API_KEY: "${DEEPSEEK_API_KEY:-}"
+      # OpenRouter (optional; also powers Fusion presets and speech transcription)
       OPENROUTER_API_KEY: "${OPENROUTER_API_KEY:-}"
       OPENROUTER_BASE_URL: "${OPENROUTER_BASE_URL:-}"
       NVIDIA_API_KEY: "${NVIDIA_API_KEY:-}"
@@ -22,13 +25,22 @@ services:
       OLLAMA_BASE_URL: "${OLLAMA_BASE_URL:-http://host.docker.internal:11434}"
 
       # --- model defaults ---
-      DEFAULT_MODEL_ID: "${DEFAULT_MODEL_ID:-anthropic/claude-opus-5}"
-      DEFAULT_MODEL_PROVIDER: "${DEFAULT_MODEL_PROVIDER:-openrouter}"
+      DEFAULT_MODEL_ID: "${DEFAULT_MODEL_ID:-deepseek-v4-flash-vision-exp}"
+      DEFAULT_MODEL_PROVIDER: "${DEFAULT_MODEL_PROVIDER:-deepseek}"
 
       # --- backend knobs ---
       KADY_HOST: "0.0.0.0"
       KADY_PORT: "8000"
       KADY_PROJECTS_ROOT: "/app/projects"
+
+      # --- browser → API wiring ---
+      # Leave NEXT_PUBLIC_ADK_API_URL empty: the UI derives the backend URL
+      # from the page's own hostname, so it works whether you open it via
+      # localhost, a LAN IP, or a domain. Set it only for custom setups
+      # (e.g. a TLS reverse proxy). NEXT_PUBLIC_ADK_API_PORT must be the
+      # host-side API port (KADY_API_PORT).
+      NEXT_PUBLIC_ADK_API_URL: "${NEXT_PUBLIC_ADK_API_URL:-}"
+      NEXT_PUBLIC_ADK_API_PORT: "${KADY_API_PORT:-8000}"
 
       # --- optional web-access keys ---
       EXA_API_KEY: "${EXA_API_KEY:-}"

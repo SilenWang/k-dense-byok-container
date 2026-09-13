@@ -1,6 +1,6 @@
 # K-Dense BYOK — Docker 容器
 
-为 [K-Dense BYOK](https://github.com/K-Dense-AI/k-dense-byok) 项目提供的 Docker 容器化方案，支持 GPU 直通，可直接运行 Kady 科研助手。
+为 [K-Dense BYOK](https://github.com/K-Dense-AI/k-dense-byok) 项目提供的 Docker 容器化方案，支持 GPU 直通，可直接运行 Kady 科研助手。默认使用 **DeepSeek 官方 API** 作为模型来源。
 
 ## 前置要求
 
@@ -51,6 +51,8 @@ pixi run up-gpu-ollama
 ### 4. 访问
 
 浏览器打开 [http://localhost:3000](http://localhost:3000)
+
+**从其他机器访问（远程 / 局域网）：** 直接用 `http://<服务器IP>:3000` 打开即可。前端会自动用页面自身的 hostname 去连接后端的 8000 端口（而不是写死 `localhost`），因此无需额外配置。若你把 UI 放在 TLS 反向代理或不同域名后面，在 `.env` 中设置 `NEXT_PUBLIC_ADK_API_URL` 指向公开的 API 地址。
 
 **首次启动说明：** 容器启动时会：
 1. 重新校验 npm 依赖（已预先安装，增量极快）
@@ -113,24 +115,28 @@ pixi run up-gpu-ollama
 
 | 变量 | 默认值 | 说明 |
 |---|---|---|
-| `OPENROUTER_API_KEY` | — | OpenRouter API 密钥（最通用） |
+| `DEEPSEEK_API_KEY` | — | DeepSeek 官方 API 密钥（默认模型来源） |
+| `OPENROUTER_API_KEY` | — | OpenRouter API 密钥（可选，最通用；Fusion 与语音转写仍需要） |
 | `OPENROUTER_BASE_URL` | — | 可指向任意 OpenAI 兼容网关（如 Requesty） |
 | `NVIDIA_API_KEY` | — | NVIDIA NIM API 密钥（build.nvidia.com） |
 | `OPENAI_COMPATIBLE_BASE_URL` | — | 本地 OpenAI 兼容服务器（LM Studio / vLLM） |
 | `MODAL_TOKEN_ID` / `MODAL_TOKEN_SECRET` | — | Modal 云端 GPU 计算凭证 |
 | `OLLAMA_BASE_URL` | `http://host.docker.internal:11434` | Ollama 端点 |
-| `DEFAULT_MODEL_ID` | `anthropic/claude-opus-5` | 默认模型 ID |
-| `DEFAULT_MODEL_PROVIDER` | `openrouter` | 默认模型提供商 |
+| `DEFAULT_MODEL_ID` | `deepseek-v4-flash-vision-exp` | 默认模型 ID |
+| `DEFAULT_MODEL_PROVIDER` | `deepseek` | 默认模型提供商 |
 | `KADY_UI_PORT` | `3000` | 前端端口映射 |
 | `KADY_API_PORT` | `8000` | 后端端口映射 |
+| `NEXT_PUBLIC_ADK_API_URL` | 空（自动推导） | 浏览器访问后端的完整 URL；留空时按页面 hostname 自动推导 |
+| `NEXT_PUBLIC_ADK_API_PORT` | `KADY_API_PORT` | 自动推导时使用的后端端口 |
 | `HTTP_PROXY` / `HTTPS_PROXY` | — | 企业代理 |
 
 ### 模型来源说明
 
-K-Dense BYOK 的命名"BYOK"（Bring Your Own Keys）就说明了它支持多种模型来源：
+K-Dense BYOK 的命名"BYOK"（Bring Your Own Keys）就说明了它支持多种模型来源。容器默认走 DeepSeek 官方 API：
 
 | 方式 | 配置方法 | 费用 |
 |---|---|---|
+| **DeepSeek 官方 API**（默认） | `.env` 填 `DEEPSEEK_API_KEY` | 按量付费 |
 | **OpenRouter** | `.env` 填 `OPENROUTER_API_KEY` | 按量付费 |
 | **NVIDIA NIM** | `.env` 填 `NVIDIA_API_KEY` | NVIDIA API 配额 |
 | **ChatGPT / Claude / Copilot / xAI 订阅** | 启动应用后，Settings → Model providers 网页授权连接（OAuth），无需 API key | 使用已有订阅 |
@@ -177,6 +183,14 @@ pixi run restart
 KADY_UI_PORT=3001
 KADY_API_PORT=8001
 ```
+
+### 前端报 `net::ERR_CONNECTION_REFUSED`，请求的是 `http://localhost:8000`
+
+这说明浏览器把 API 地址解析到了**你自己电脑**的 `localhost:8000`（容器内已修正为按页面 hostname 自动推导）。请：
+
+1. 用 `http://<服务器IP>:3000` 打开 UI（而不是只在本地做端口转发 3000）。
+2. 确认 `8000` 端口已发布且可从浏览器所在机器访问（`curl http://<服务器IP>:8000/health` 应返回 200）。
+3. 若自定义过端口，确认 `KADY_API_PORT` 与实际映射一致；反向代理/域名场景请设置 `NEXT_PUBLIC_ADK_API_URL`。
 
 ### 网络问题（代理环境）
 
