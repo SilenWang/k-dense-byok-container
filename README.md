@@ -1,6 +1,6 @@
 # K-Dense BYOK — Docker 容器
 
-为 [K-Dense BYOK](https://github.com/K-Dense-AI/k-dense-byok) 项目提供的 Docker 容器化方案，支持 GPU 直通，可直接运行 Kady 科研助手。
+为 [K-Dense BYOK](https://github.com/K-Dense-AI/k-dense-byok) 项目提供的 Docker 容器化方案，支持 GPU 直通，可直接运行 Kady 科研助手。默认使用 **DeepSeek 官方 API** 作为模型来源。
 
 ## 前置要求
 
@@ -113,24 +113,26 @@ pixi run up-gpu-ollama
 
 | 变量 | 默认值 | 说明 |
 |---|---|---|
-| `OPENROUTER_API_KEY` | — | OpenRouter API 密钥（最通用） |
+| `DEEPSEEK_API_KEY` | — | DeepSeek 官方 API 密钥（默认模型来源） |
+| `OPENROUTER_API_KEY` | — | OpenRouter API 密钥（可选，最通用；Fusion 与语音转写仍需要） |
 | `OPENROUTER_BASE_URL` | — | 可指向任意 OpenAI 兼容网关（如 Requesty） |
 | `NVIDIA_API_KEY` | — | NVIDIA NIM API 密钥（build.nvidia.com） |
 | `OPENAI_COMPATIBLE_BASE_URL` | — | 本地 OpenAI 兼容服务器（LM Studio / vLLM） |
 | `MODAL_TOKEN_ID` / `MODAL_TOKEN_SECRET` | — | Modal 云端 GPU 计算凭证 |
 | `OLLAMA_BASE_URL` | `http://host.docker.internal:11434` | Ollama 端点 |
-| `DEFAULT_MODEL_ID` | `anthropic/claude-opus-5` | 默认模型 ID |
-| `DEFAULT_MODEL_PROVIDER` | `openrouter` | 默认模型提供商 |
+| `DEFAULT_MODEL_ID` | `deepseek-v4-flash-vision-exp` | 默认模型 ID |
+| `DEFAULT_MODEL_PROVIDER` | `deepseek` | 默认模型提供商 |
 | `KADY_UI_PORT` | `3000` | 前端端口映射 |
 | `KADY_API_PORT` | `8000` | 后端端口映射 |
 | `HTTP_PROXY` / `HTTPS_PROXY` | — | 企业代理 |
 
 ### 模型来源说明
 
-K-Dense BYOK 的命名"BYOK"（Bring Your Own Keys）就说明了它支持多种模型来源：
+K-Dense BYOK 的命名"BYOK"（Bring Your Own Keys）就说明了它支持多种模型来源。容器默认走 DeepSeek 官方 API：
 
 | 方式 | 配置方法 | 费用 |
 |---|---|---|
+| **DeepSeek 官方 API**（默认） | `.env` 填 `DEEPSEEK_API_KEY` | 按量付费 |
 | **OpenRouter** | `.env` 填 `OPENROUTER_API_KEY` | 按量付费 |
 | **NVIDIA NIM** | `.env` 填 `NVIDIA_API_KEY` | NVIDIA API 配额 |
 | **ChatGPT / Claude / Copilot / xAI 订阅** | 启动应用后，Settings → Model providers 网页授权连接（OAuth），无需 API key | 使用已有订阅 |
