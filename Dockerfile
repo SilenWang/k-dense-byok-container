@@ -20,6 +20,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     git \
     lsof \
+    patch \
     python3 \
     python3-pip \
     python3-venv \
@@ -33,10 +34,28 @@ RUN curl -LsSf https://astral.sh/uv/install.sh | sh || echo "[WARN] uv install s
 WORKDIR /app
 
 # -- clone the BYOK source at a pinned version ----------------------
+# Pinned to a commit so the container patches below apply deterministically.
+# To move to a newer upstream, bump BYOK_REF and re-verify/rebase the patches
+# in scripts/patches/.
 ARG BYOK_REPO=https://github.com/K-Dense-AI/k-dense-byok.git
-ARG BYOK_REF=main
-RUN git clone --depth 1 --branch ${BYOK_REF} ${BYOK_REPO} /app && \
-    rm -rf .git
+ARG BYOK_REF=2c613e38052f199526546191c8d8b98c1eb3b15e
+RUN git init -q /app && \
+    cd /app && \
+    git remote add origin ${BYOK_REPO} && \
+    git fetch --depth 1 origin ${BYOK_REF} && \
+    git checkout -q --detach FETCH_HEAD && \
+    rm -rf /app/.git
+
+# -- container patches ----------------------------------------------
+# Small fixes needed to run upstream in a container reached from another
+# machine (not just the host's own localhost). Applied after the clone so a
+# failed patch fails the build loudly instead of shipping a broken image.
+COPY scripts/patches/ /tmp/patches/
+RUN for p in /tmp/patches/*.patch; do \
+        echo "applying $(basename "$p")"; \
+        patch -p1 -d /app < "$p"; \
+    done && \
+    rm -rf /tmp/patches
 
 # Pre-seed a minimal .env so start.mjs does NOT copy .env.example
 # (which would clobber the environment passed by docker compose).

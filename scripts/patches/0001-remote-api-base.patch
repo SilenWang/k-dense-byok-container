@@ -1,0 +1,34 @@
+diff --git a/web/src/lib/projects.ts b/web/src/lib/projects.ts
+index 300757c..5b4d5c8 100644
+--- a/web/src/lib/projects.ts
++++ b/web/src/lib/projects.ts
+@@ -46,8 +46,27 @@ export interface ProjectPatchInput {
+ 
+ export const DEFAULT_PROJECT_ID = "default";
+ 
+-export const API_BASE =
+-  process.env.NEXT_PUBLIC_ADK_API_URL ?? "http://localhost:8000";
++const API_PORT = process.env.NEXT_PUBLIC_ADK_API_PORT ?? "8000";
++
++/**
++ * Resolve the backend URL the browser should talk to.
++ *
++ * `NEXT_PUBLIC_ADK_API_URL` wins when explicitly set. Otherwise, in the
++ * browser we derive the host from the page itself, so a container accessed
++ * from another machine (LAN IP, hostname, or reverse proxy) talks to the
++ * host that served the UI instead of the viewer's own `localhost`.
++ * `NEXT_PUBLIC_ADK_API_PORT` is the published host port (default 8000).
++ */
++function resolveApiBase(): string {
++  const configured = process.env.NEXT_PUBLIC_ADK_API_URL;
++  if (configured) return configured;
++  if (typeof window !== "undefined" && window.location?.hostname) {
++    return `${window.location.protocol}//${window.location.hostname}:${API_PORT}`;
++  }
++  return `http://localhost:${API_PORT}`;
++}
++
++export const API_BASE = resolveApiBase();
+ 
+ /**
+  * Put long-lived SSE requests on a separate browser connection pool from

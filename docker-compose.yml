@@ -33,6 +33,15 @@ services:
       KADY_PORT: "8000"
       KADY_PROJECTS_ROOT: "/app/projects"
 
+      # --- browser → API wiring ---
+      # Leave NEXT_PUBLIC_ADK_API_URL empty: the UI derives the backend URL
+      # from the page's own hostname, so it works whether you open it via
+      # localhost, a LAN IP, or a domain. Set it only for custom setups
+      # (e.g. a TLS reverse proxy). NEXT_PUBLIC_ADK_API_PORT must be the
+      # host-side API port (KADY_API_PORT).
+      NEXT_PUBLIC_ADK_API_URL: "${NEXT_PUBLIC_ADK_API_URL:-}"
+      NEXT_PUBLIC_ADK_API_PORT: "${KADY_API_PORT:-8000}"
+
       # --- optional web-access keys ---
       EXA_API_KEY: "${EXA_API_KEY:-}"
       PERPLEXITY_API_KEY: "${PERPLEXITY_API_KEY:-}"

@@ -52,6 +52,8 @@ pixi run up-gpu-ollama
 
 浏览器打开 [http://localhost:3000](http://localhost:3000)
 
+**从其他机器访问（远程 / 局域网）：** 直接用 `http://<服务器IP>:3000` 打开即可。前端会自动用页面自身的 hostname 去连接后端的 8000 端口（而不是写死 `localhost`），因此无需额外配置。若你把 UI 放在 TLS 反向代理或不同域名后面，在 `.env` 中设置 `NEXT_PUBLIC_ADK_API_URL` 指向公开的 API 地址。
+
 **首次启动说明：** 容器启动时会：
 1. 重新校验 npm 依赖（已预先安装，增量极快）
 2. 下载科学技能目录（需联网）
@@ -124,6 +126,8 @@ pixi run up-gpu-ollama
 | `DEFAULT_MODEL_PROVIDER` | `deepseek` | 默认模型提供商 |
 | `KADY_UI_PORT` | `3000` | 前端端口映射 |
 | `KADY_API_PORT` | `8000` | 后端端口映射 |
+| `NEXT_PUBLIC_ADK_API_URL` | 空（自动推导） | 浏览器访问后端的完整 URL；留空时按页面 hostname 自动推导 |
+| `NEXT_PUBLIC_ADK_API_PORT` | `KADY_API_PORT` | 自动推导时使用的后端端口 |
 | `HTTP_PROXY` / `HTTPS_PROXY` | — | 企业代理 |
 
 ### 模型来源说明
@@ -179,6 +183,14 @@ pixi run restart
 KADY_UI_PORT=3001
 KADY_API_PORT=8001
 ```
+
+### 前端报 `net::ERR_CONNECTION_REFUSED`，请求的是 `http://localhost:8000`
+
+这说明浏览器把 API 地址解析到了**你自己电脑**的 `localhost:8000`（容器内已修正为按页面 hostname 自动推导）。请：
+
+1. 用 `http://<服务器IP>:3000` 打开 UI（而不是只在本地做端口转发 3000）。
+2. 确认 `8000` 端口已发布且可从浏览器所在机器访问（`curl http://<服务器IP>:8000/health` 应返回 200）。
+3. 若自定义过端口，确认 `KADY_API_PORT` 与实际映射一致；反向代理/域名场景请设置 `NEXT_PUBLIC_ADK_API_URL`。
 
 ### 网络问题（代理环境）
 
